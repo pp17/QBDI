@@ -69,7 +69,7 @@ jobs:
         run: |
           cmake -DQBDI_PLATFORM=${{ env.QBDI_PLATFORM }} \
                 -DQBDI_ARCH=${{ matrix.QBDI_ARCH }} \
-                -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_BUILD_TYPE=Debug \
                 -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/android-ndk-${{ env.NDK_VERSION }}/build/cmake/android.toolchain.cmake \
                 -DANDROID_ABI=${{ matrix.ANDROID_ABI }} \
                 -DANDROID_PLATFORM=${{ env.ANDROID_PLATFORM }} \
