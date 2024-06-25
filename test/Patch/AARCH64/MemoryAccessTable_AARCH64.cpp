@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,25 +27,43 @@
 #include "Patch/InstInfo.h"
 #include "Patch/MemoryAccessTable.h"
 
-#define MAXFAIL 20
+#define MAXFAIL 2000
 
 namespace {
 
 using namespace llvm::AArch64;
 
 const std::set<unsigned> unsupportedInst{
+    // clang-format off
     // PseudoInst
-    CMP_SWAP_128,
-    CMP_SWAP_16,
-    CMP_SWAP_32,
-    CMP_SWAP_64,
-    CMP_SWAP_8,
-    HWASAN_CHECK_MEMACCESS,
-    HWASAN_CHECK_MEMACCESS_SHORTGRANULES,
-    SPACE,
-    STGloop,
-    STZGloop,
-    // ARMv8 SVE
+
+    // ARMv8 SME
+    EXTRACT_ZPMXI_H_B,
+    EXTRACT_ZPMXI_H_D,
+    EXTRACT_ZPMXI_H_H,
+    EXTRACT_ZPMXI_H_Q,
+    EXTRACT_ZPMXI_H_S,
+    EXTRACT_ZPMXI_V_B,
+    EXTRACT_ZPMXI_V_D,
+    EXTRACT_ZPMXI_V_H,
+    EXTRACT_ZPMXI_V_Q,
+    EXTRACT_ZPMXI_V_S,
+    LD1B_2Z_STRIDED,
+    LD1B_2Z_STRIDED_IMM,
+    LD1B_4Z_STRIDED,
+    LD1B_4Z_STRIDED_IMM,
+    LD1D_2Z_STRIDED,
+    LD1D_2Z_STRIDED_IMM,
+    LD1D_4Z_STRIDED,
+    LD1D_4Z_STRIDED_IMM,
+    LD1H_2Z_STRIDED,
+    LD1H_2Z_STRIDED_IMM,
+    LD1H_4Z_STRIDED,
+    LD1H_4Z_STRIDED_IMM,
+    LD1W_2Z_STRIDED,
+    LD1W_2Z_STRIDED_IMM,
+    LD1W_4Z_STRIDED,
+    LD1W_4Z_STRIDED_IMM,
     LD1_MXIPXX_H_B,
     LD1_MXIPXX_H_D,
     LD1_MXIPXX_H_H,
@@ -68,6 +86,7 @@ const std::set<unsigned> unsupportedInst{
     ST1_MXIPXX_V_Q,
     ST1_MXIPXX_V_S,
     STR_ZA,
+
     // ARMv8 SVE
     GLD1B_D_IMM_REAL,
     GLD1B_D_REAL,
@@ -95,6 +114,7 @@ const std::set<unsigned> unsupportedInst{
     GLD1H_S_SXTW_SCALED_REAL,
     GLD1H_S_UXTW_REAL,
     GLD1H_S_UXTW_SCALED_REAL,
+    GLD1Q,
     GLD1SB_D_IMM_REAL,
     GLD1SB_D_REAL,
     GLD1SB_D_SXTW_REAL,
@@ -198,6 +218,10 @@ const std::set<unsigned> unsupportedInst{
     GLDFF1W_UXTW_REAL,
     GLDFF1W_UXTW_SCALED_REAL,
     LD1B,
+    LD1B_2Z,
+    LD1B_2Z_IMM,
+    LD1B_4Z,
+    LD1B_4Z_IMM,
     LD1B_D,
     LD1B_D_IMM,
     LD1B_D_IMM_REAL,
@@ -210,10 +234,20 @@ const std::set<unsigned> unsupportedInst{
     LD1B_S_IMM,
     LD1B_S_IMM_REAL,
     LD1D,
+    LD1D_2Z,
+    LD1D_2Z_IMM,
+    LD1D_4Z,
+    LD1D_4Z_IMM,
     LD1D_IMM,
     LD1D_IMM_REAL,
+    LD1D_Q,
+    LD1D_Q_IMM,
     LD1H,
     LD1H,
+    LD1H_2Z,
+    LD1H_2Z_IMM,
+    LD1H_4Z,
+    LD1H_4Z_IMM,
     LD1H_D,
     LD1H_D,
     LD1H_D_IMM,
@@ -280,17 +314,25 @@ const std::set<unsigned> unsupportedInst{
     LD1SW_D_IMM,
     LD1SW_D_IMM_REAL,
     LD1W,
+    LD1W_2Z,
+    LD1W_2Z_IMM,
+    LD1W_4Z,
+    LD1W_4Z_IMM,
     LD1W_D,
     LD1W_D_IMM,
     LD1W_D_IMM_REAL,
     LD1W_IMM,
     LD1W_IMM_REAL,
+    LD1W_Q,
+    LD1W_Q_IMM,
     LD2B,
     LD2B_IMM,
     LD2D,
     LD2D_IMM,
     LD2H,
     LD2H_IMM,
+    LD2Q,
+    LD2Q_IMM,
     LD2W,
     LD2W_IMM,
     LD3B,
@@ -299,6 +341,8 @@ const std::set<unsigned> unsupportedInst{
     LD3D_IMM,
     LD3H,
     LD3H_IMM,
+    LD3Q,
+    LD3Q_IMM,
     LD3W,
     LD3W_IMM,
     LD4B,
@@ -307,6 +351,8 @@ const std::set<unsigned> unsupportedInst{
     LD4D_IMM,
     LD4H,
     LD4H_IMM,
+    LD4Q,
+    LD4Q_IMM,
     LD4W,
     LD4W_IMM,
     LDFF1B_D_REAL,
@@ -406,33 +452,37 @@ const std::set<unsigned> unsupportedInst{
     PRFH_S_PZI,
     PRFH_S_SXTW_SCALED,
     PRFH_S_UXTW_SCALED,
-    PRFS_PRR,
     PRFW_D_PZI,
     PRFW_D_SCALED,
     PRFW_D_SXTW_SCALED,
     PRFW_D_UXTW_SCALED,
     PRFW_PRI,
+    PRFW_PRR,
     PRFW_S_PZI,
     PRFW_S_SXTW_SCALED,
     PRFW_S_UXTW_SCALED,
+    PSEL_PPPRI_B,
+    PSEL_PPPRI_D,
+    PSEL_PPPRI_H,
+    PSEL_PPPRI_S,
     SETFFR,
+    SST1B_D,
     SST1B_D_IMM,
-    SST1B_D_REAL,
     SST1B_D_SXTW,
     SST1B_D_UXTW,
     SST1B_S_IMM,
     SST1B_S_SXTW,
     SST1B_S_UXTW,
+    SST1D,
     SST1D_IMM,
-    SST1D_REAL,
-    SST1D_SCALED_SCALED_REAL,
+    SST1D_SCALED,
     SST1D_SXTW,
     SST1D_SXTW_SCALED,
     SST1D_UXTW,
     SST1D_UXTW_SCALED,
+    SST1H_D,
     SST1H_D_IMM,
-    SST1H_D_REAL,
-    SST1H_D_SCALED_SCALED_REAL,
+    SST1H_D_SCALED,
     SST1H_D_SXTW,
     SST1H_D_SXTW_SCALED,
     SST1H_D_UXTW,
@@ -442,9 +492,10 @@ const std::set<unsigned> unsupportedInst{
     SST1H_S_SXTW_SCALED,
     SST1H_S_UXTW,
     SST1H_S_UXTW_SCALED,
+    SST1Q,
+    SST1W_D,
     SST1W_D_IMM,
-    SST1W_D_REAL,
-    SST1W_D_SCALED_SCALED_REAL,
+    SST1W_D_SCALED,
     SST1W_D_SXTW,
     SST1W_D_SXTW_SCALED,
     SST1W_D_UXTW,
@@ -464,6 +515,8 @@ const std::set<unsigned> unsupportedInst{
     ST1B_S_IMM,
     ST1D,
     ST1D_IMM,
+    ST1D_Q,
+    ST1D_Q_IMM,
     ST1H,
     ST1H_D,
     ST1H_D_IMM,
@@ -474,6 +527,8 @@ const std::set<unsigned> unsupportedInst{
     ST1W_D,
     ST1W_D_IMM,
     ST1W_IMM,
+    ST1W_Q,
+    ST1W_Q_IMM,
     ST2B,
     ST2B_IMM,
     ST2D,
@@ -525,51 +580,168 @@ const std::set<unsigned> unsupportedInst{
     WHILEWR_PXX_S,
     WRFFR,
 
+    // ARMv8 SME2
+    LDNT1B_2Z,
+    LDNT1B_2Z_IMM,
+    LDNT1B_2Z_STRIDED,
+    LDNT1B_2Z_STRIDED_IMM,
+    LDNT1B_4Z,
+    LDNT1B_4Z_IMM,
+    LDNT1B_4Z_STRIDED,
+    LDNT1B_4Z_STRIDED_IMM,
+    LDNT1D_2Z,
+    LDNT1D_2Z_IMM,
+    LDNT1D_2Z_STRIDED,
+    LDNT1D_2Z_STRIDED_IMM,
+    LDNT1D_4Z,
+    LDNT1D_4Z_IMM,
+    LDNT1D_4Z_STRIDED,
+    LDNT1D_4Z_STRIDED_IMM,
+    LDNT1H_2Z,
+    LDNT1H_2Z_IMM,
+    LDNT1H_2Z_STRIDED,
+    LDNT1H_2Z_STRIDED_IMM,
+    LDNT1H_4Z,
+    LDNT1H_4Z_IMM,
+    LDNT1H_4Z_STRIDED,
+    LDNT1H_4Z_STRIDED_IMM,
+    LDNT1W_2Z,
+    LDNT1W_2Z_IMM,
+    LDNT1W_2Z_STRIDED,
+    LDNT1W_2Z_STRIDED_IMM,
+    LDNT1W_4Z,
+    LDNT1W_4Z_IMM,
+    LDNT1W_4Z_STRIDED,
+    LDNT1W_4Z_STRIDED_IMM,
+    LDR_TX,
+    ST1B_2Z,
+    ST1B_2Z_IMM,
+    ST1B_2Z_STRIDED,
+    ST1B_2Z_STRIDED_IMM,
+    ST1B_4Z,
+    ST1B_4Z_IMM,
+    ST1B_4Z_STRIDED,
+    ST1B_4Z_STRIDED_IMM,
+    ST1D_2Z,
+    ST1D_2Z_IMM,
+    ST1D_2Z_STRIDED,
+    ST1D_2Z_STRIDED_IMM,
+    ST1D_4Z,
+    ST1D_4Z_IMM,
+    ST1D_4Z_STRIDED,
+    ST1D_4Z_STRIDED_IMM,
+    ST1H_2Z,
+    ST1H_2Z_IMM,
+    ST1H_2Z_STRIDED,
+    ST1H_2Z_STRIDED_IMM,
+    ST1H_4Z,
+    ST1H_4Z_IMM,
+    ST1H_4Z_STRIDED,
+    ST1H_4Z_STRIDED_IMM,
+    ST1W_2Z,
+    ST1W_2Z_IMM,
+    ST1W_2Z_STRIDED,
+    ST1W_2Z_STRIDED_IMM,
+    ST1W_4Z,
+    ST1W_4Z_IMM,
+    ST1W_4Z_STRIDED,
+    ST1W_4Z_STRIDED_IMM,
+    ST2Q,
+    ST2Q_IMM,
+    ST3Q,
+    ST3Q_IMM,
+    ST4Q,
+    ST4Q_IMM,
+    STNT1B_2Z,
+    STNT1B_2Z_IMM,
+    STNT1B_2Z_STRIDED,
+    STNT1B_2Z_STRIDED_IMM,
+    STNT1B_4Z,
+    STNT1B_4Z_IMM,
+    STNT1B_4Z_STRIDED,
+    STNT1B_4Z_STRIDED_IMM,
+    STNT1D_2Z,
+    STNT1D_2Z_IMM,
+    STNT1D_2Z_STRIDED,
+    STNT1D_2Z_STRIDED_IMM,
+    STNT1D_4Z,
+    STNT1D_4Z_IMM,
+    STNT1D_4Z_STRIDED,
+    STNT1D_4Z_STRIDED_IMM,
+    STNT1H_2Z,
+    STNT1H_2Z_IMM,
+    STNT1H_2Z_STRIDED,
+    STNT1H_2Z_STRIDED_IMM,
+    STNT1H_4Z,
+    STNT1H_4Z_IMM,
+    STNT1H_4Z_STRIDED,
+    STNT1H_4Z_STRIDED_IMM,
+    STNT1W_2Z,
+    STNT1W_2Z_IMM,
+    STNT1W_2Z_STRIDED,
+    STNT1W_2Z_STRIDED_IMM,
+    STNT1W_4Z,
+    STNT1W_4Z_IMM,
+    STNT1W_4Z_STRIDED,
+    STNT1W_4Z_STRIDED_IMM,
+    STR_TX,
+
     // ARMv8 MTE
     LDG,
     LDGM,
-    ST2GOffset,
     ST2GPostIndex,
     ST2GPreIndex,
-    STGOffset,
+    ST2Gi,
     STGPi,
     STGPostIndex,
     STGPpost,
     STGPpre,
     STGPreIndex,
-    STZ2GOffset,
+    STGi,
     STZ2GPostIndex,
     STZ2GPreIndex,
-    STZGOffset,
     STZGPostIndex,
     STZGPreIndex,
-
-    // ARMv8 Pauth
-    LDRAAindexed,
-    LDRAAwriteback,
-    LDRABindexed,
-    LDRABwriteback,
+    STZ2Gi,
+    STZGi,
 
     // ARMv9 TME
     TCANCEL,
     TCOMMIT,
     TSTART,
+    // clang-format on
 };
 
 // instruction that reads memory but without mayLoad
 const std::set<unsigned> fixupRead{
+    // clang-format off
     LD64B,
+    LDAPURBi,
+    LDAPURHi,
+    LDAPURXi,
+    LDAPURi,
+    LDAPURSBWi,
+    LDAPURSBXi,
+    LDAPURSHWi,
+    LDAPURSHXi,
+    LDAPURSWi,
+    // clang-format on
 };
 
 // instruction that writes memory but without mayStore
 const std::set<unsigned> fixupWrite{
+    // clang-format off
+    GCSSTR,
+    GCSSTTR,
     ST64B,
     ST64BV,
     ST64BV0,
+    // clang-format on
 };
 
 // instruction with mayLoad but don't reads memory
 const std::set<unsigned> fixupNoRead{
+    // clang-format off
     // exclusive mecanism
     CLREX,
     STLXPW,
@@ -589,9 +761,11 @@ const std::set<unsigned> fixupNoRead{
     DSB,
     HINT,
     ISB,
+    // clang-format on
 };
 // instruction with mayStore but don't writes memory
 const std::set<unsigned> fixupNoWrite{
+    // clang-format off
     // exclusive mecanism
     LDXRB,
     LDXRH,
@@ -611,6 +785,7 @@ const std::set<unsigned> fixupNoWrite{
     DSB,
     HINT,
     ISB,
+    // clang-format on
 };
 
 } // namespace
@@ -634,8 +809,10 @@ TEST_CASE_METHOD(MemoryAccessTable, "MemoryAccessTable-CrossCheck") {
     llvm::MCInst inst;
     inst.setOpcode(opcode);
 
-    bool doRead = (QBDI::getReadSize(inst, llvmcpu) != 0);
-    bool doWrite = (QBDI::getWriteSize(inst, llvmcpu) != 0);
+    bool doRead =
+        (QBDI::getReadSize(inst, llvmcpu) != 0 or QBDI::unsupportedRead(inst));
+    bool doWrite = (QBDI::getWriteSize(inst, llvmcpu) != 0 or
+                    QBDI::unsupportedWrite(inst));
     bool mayRead = desc.mayLoad();
     bool mayWrite = desc.mayStore();
 

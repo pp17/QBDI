@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,9 @@ void removeConflictModule(VMInstanceRef vm, qbdi_MemoryMap *modules,
   for (i = 0; i < size; i++) {
     if ((modules[i].permission & QBDI_PF_EXEC) &&
         (strstr(modules[i].name, "libc-2.") ||
+         strstr(modules[i].name, "libc.so.") ||
          strstr(modules[i].name, "ld-2.") ||
+         strstr(modules[i].name, "ld-linux-") ||
          strstr(modules[i].name, "libpthread-") ||
          strstr(modules[i].name, "libcofi") || modules[i].name[0] == 0)) {
       qbdi_removeInstrumentedRange(vm, modules[i].start, modules[i].end);

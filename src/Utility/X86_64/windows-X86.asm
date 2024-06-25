@@ -1,6 +1,6 @@
 ; This file is part of QBDI.
 ;
-; Copyright 2017 - 2022 Quarkslab
+; Copyright 2017 - 2024 Quarkslab
 ;
 ; Licensed under the Apache License, Version 2.0 (the "License");
 ; you may not use this file except in compliance with the License.
@@ -20,31 +20,22 @@
 
 _TEXT segment
 
-PUBLIC qbdi_runCodeBlock
+PUBLIC qbdi_asmStackSwitch
 
 .CODE
 
-qbdi_runCodeBlock PROC
-    mov eax, [esp+4];
-    mov ecx, [esp+8];
-    test ecx, 2;
-    jz _skip_save_fpu;
+qbdi_asmStackSwitch PROC
+    push ebp;
+    mov ebp, esp;
+    mov esp, dword ptr [ebp+12];
+    and esp, -16;
     sub esp, 8;
-    stmxcsr [esp];
-    fnstcw [esp+4];
-_skip_save_fpu:
-    pushad;
-    call eax;
-    popad;
-    test ecx, 2;
-    jz _skip_restore_fpu;
-    fninit;
-    fldcw [esp+4];
-    ldmxcsr [esp];
-    add esp, 8;
-_skip_restore_fpu:
-    cld;
+    push ebp;
+    push dword ptr [ebp+8];
+    call dword ptr [ebp+16];
+    mov esp, ebp;
+    pop ebp;
     ret;
-qbdi_runCodeBlock ENDP
+qbdi_asmStackSwitch ENDP
 
 END

@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 
 #include "QBDI/Options.h"
 #include "QBDI/State.h"
@@ -46,7 +47,6 @@ class raw_pwrite_stream;
 } // namespace llvm
 
 namespace QBDI {
-class memory_ostream;
 struct RegLLVM;
 
 class LLVMCPU {
@@ -61,7 +61,6 @@ private:
   CPUMode cpumode;
 
   std::unique_ptr<llvm::MCAsmInfo> MAI;
-  std::unique_ptr<llvm::MCCodeEmitter> MCE;
   std::unique_ptr<llvm::MCContext> MCTX;
   std::unique_ptr<llvm::MCInstrInfo> MCII;
   std::unique_ptr<llvm::MCObjectFileInfo> MOFI;
@@ -86,7 +85,8 @@ public:
   LLVMCPU(const LLVMCPU &) = delete;
   LLVMCPU &operator=(const LLVMCPU &) = delete;
 
-  void writeInstruction(llvm::MCInst inst, memory_ostream &stream) const;
+  void writeInstruction(llvm::MCInst inst, llvm::SmallVectorImpl<char> &CB,
+                        rword address = 0) const;
 
   bool getInstruction(llvm::MCInst &inst, uint64_t &size,
                       llvm::ArrayRef<uint8_t> bytes, uint64_t address) const;

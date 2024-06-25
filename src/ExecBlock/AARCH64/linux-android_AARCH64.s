@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
  */
 .text
 
-.private_extern __qbdi_runCodeBlock
+.hidden __qbdi_runCodeBlock
+.globl  __qbdi_runCodeBlock
 
 .align 8
 __qbdi_runCodeBlock:
@@ -29,8 +30,6 @@ __qbdi_runCodeBlock:
   # Push GPR
   # ========
   # see https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#611general-purpose-registers
-  # OSX specify that x18 should not be used, we don't restore or backup it
-  # see https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
     # caller-saved register
     #stp x0,  x1,  [sp, #-16]!;
     #stp x2,  x3,  [sp, #-16]!;
@@ -42,12 +41,13 @@ __qbdi_runCodeBlock:
     #stp x14, x15, [sp, #-16]!;
     #stp x16, x17, [sp, #-16]!;
   # callee-saved register
-  stp x19, x20, [sp, #-16]!;
-  stp x21, x22, [sp, #-16]!;
-  stp x23, x24, [sp, #-16]!;
-  stp x25, x26, [sp, #-16]!;
-  stp x27, x28, [sp, #-16]!;
-  stp x29, x30, [sp, #-16]!;
+  stp x18, x19, [sp, #-16]!;
+  stp x20, x21, [sp, #-16]!;
+  stp x22, x23, [sp, #-16]!;
+  stp x24, x25, [sp, #-16]!;
+  stp x26, x27, [sp, #-16]!;
+  stp x28, x29, [sp, #-16]!;
+  stp x30, x0,  [sp, #-16]!;
 
 
   # Save SIMD registers
@@ -73,12 +73,13 @@ __qbdi_runCodeBlock:
 
   # Pop GPR
   # =======
-  ldp x29, x30, [sp], 16;
-  ldp x27, x28, [sp], 16;
-  ldp x25, x26, [sp], 16;
-  ldp x23, x24, [sp], 16;
-  ldp x21, x22, [sp], 16;
-  ldp x19, x20, [sp], 16;
+  ldp x30, x0,  [sp], 16;
+  ldp x28, x29, [sp], 16;
+  ldp x26, x27, [sp], 16;
+  ldp x24, x25, [sp], 16;
+  ldp x22, x23, [sp], 16;
+  ldp x20, x21, [sp], 16;
+  ldp x18, x19, [sp], 16;
     # caller-saved register
     #ldp x16, x17, [sp], 16;
     #ldp x14, x15, [sp], 16;
@@ -92,3 +93,5 @@ __qbdi_runCodeBlock:
 
   ret;
 
+# mark stack as no-exec
+.section	.note.GNU-stack,"",@progbits

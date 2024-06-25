@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,13 +172,13 @@ typedef struct {
                                    * of an operand provided by the VM.
                                    * (warning: NULL if !ANALYSIS_OPERANDS) */
   // ANALYSIS_SYMBOL
-  const char *symbol;    /*!< Instruction symbol
-                          * (warning: NULL if !ANALYSIS_SYMBOL or not found)
-                          */
-  uint32_t symbolOffset; /*!< Instruction symbol offset */
-  const char *module;    /*!< Instruction module name
-                          * (warning: NULL if !ANALYSIS_SYMBOL or not found)
-                          */
+  const char *symbolName; /*!< Instruction symbol
+                           * (warning: NULL if !ANALYSIS_SYMBOL or not found)
+                           */
+  uint32_t symbolOffset;  /*!< Instruction symbol offset */
+  const char *moduleName; /*!< Instruction module name
+                           * (warning: NULL if !ANALYSIS_SYMBOL or not found)
+                           */
   // INTERNAL
   uint32_t analysisType; /*!< INTERNAL: Instruction analysis type
                           * (this should NOT be used)

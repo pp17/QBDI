@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,9 +66,9 @@ void LLVMOperandInfoCheck::checkPredicate(QBDI::CPUMode cpuMode) {
     bool consecutivePredicate = true;
 
     for (unsigned int opn = 0; opn < desc.getNumOperands(); opn++) {
-      const llvm::MCOperandInfo *opInfo = desc.opInfo_begin() + opn;
-      if (opInfo->isPredicate()) {
-        CHECK(opInfo->OperandType == llvm::MCOI::OPERAND_UNKNOWN);
+      const llvm::MCOperandInfo &opInfo = desc.operands()[opn];
+      if (opInfo.isPredicate()) {
+        CHECK(opInfo.OperandType == llvm::MCOI::OPERAND_UNKNOWN);
         if (predicateNumber == 0) {
           predicateFirstOffset = opn;
           predicateNumber++;
@@ -78,8 +78,8 @@ void LLVMOperandInfoCheck::checkPredicate(QBDI::CPUMode cpuMode) {
           predicateNumber++;
         }
       }
-      if (opInfo->RegClass == llvm::ARM::CCRRegClassID) {
-        CHECK(opInfo->isOptionalDef());
+      if (opInfo.RegClass == llvm::ARM::CCRRegClassID) {
+        CHECK(opInfo.isOptionalDef());
         numCCRRegClassID++;
       }
     }

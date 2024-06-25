@@ -4,9 +4,9 @@ target_sources(
   INTERFACE "${CMAKE_CURRENT_LIST_DIR}/InstAnalysis.cpp"
             "${CMAKE_CURRENT_LIST_DIR}/LogSys.cpp"
             "${CMAKE_CURRENT_LIST_DIR}/Memory.cpp"
+            "${CMAKE_CURRENT_LIST_DIR}/StackSwitch.cpp"
             "${CMAKE_CURRENT_LIST_DIR}/String.cpp"
-            "${CMAKE_CURRENT_LIST_DIR}/Version.cpp"
-            "${CMAKE_CURRENT_LIST_DIR}/memory_ostream.cpp")
+            "${CMAKE_CURRENT_LIST_DIR}/Version.cpp")
 
 if(QBDI_PLATFORM_ANDROID OR QBDI_PLATFORM_LINUX)
   target_sources(

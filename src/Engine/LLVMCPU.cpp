@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -38,18 +37,18 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/MC/SubtargetFeature.h"
-#include "llvm/Support/Host.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/TargetParser/Host.h"
+#include "llvm/TargetParser/SubtargetFeature.h"
+#include "llvm/TargetParser/Triple.h"
 
 #include "QBDI/Config.h"
 #include "Engine/LLVMCPU.h"
 #include "Patch/Types.h"
 #include "Utility/LogSys.h"
 #include "Utility/System.h"
-#include "Utility/memory_ostream.h"
 
 #include "spdlog/fmt/bin_to_hex.h"
 
@@ -139,8 +138,6 @@ LLVMCPU::LLVMCPU(const std::string &_cpu, const std::string &_arch,
 
   auto MAB = std::unique_ptr<llvm::MCAsmBackend>(
       target->createMCAsmBackend(*MSTI, *MRI, MCOptions));
-  MCE = std::unique_ptr<llvm::MCCodeEmitter>(
-      target->createMCCodeEmitter(*MCII, *MRI, *MCTX));
 
   // assembler, disassembler and printer
   null_ostream = std::make_unique<llvm::raw_null_ostream>();
@@ -149,7 +146,7 @@ LLVMCPU::LLVMCPU(const std::string &_cpu, const std::string &_arch,
       target->createMCDisassembler(*MSTI, *MCTX));
 
   auto codeEmitter = std::unique_ptr<llvm::MCCodeEmitter>(
-      target->createMCCodeEmitter(*MCII, *MRI, *MCTX));
+      target->createMCCodeEmitter(*MCII, *MCTX));
 
   auto objectWriter = std::unique_ptr<llvm::MCObjectWriter>(
       MAB->createObjectWriter(*null_ostream));
@@ -187,38 +184,33 @@ bool LLVMCPU::getInstruction(llvm::MCInst &instr, uint64_t &size,
 }
 
 void LLVMCPU::writeInstruction(const llvm::MCInst inst,
-                               memory_ostream &stream) const {
+                               llvm::SmallVectorImpl<char> &CB,
+                               rword address) const {
   // MCCodeEmitter needs a fixups array
   llvm::SmallVector<llvm::MCFixup, 4> fixups;
 
-  uint64_t pos = stream.current_pos();
+  uint64_t pos = CB.size();
   QBDI_DEBUG_BLOCK({
-    rword address = reinterpret_cast<rword>(stream.get_ptr()) + pos;
     std::string disass = showInst(inst, address);
-    QBDI_DEBUG("Assembling {} at 0x{:x}", disass.c_str(), address);
+    QBDI_DEBUG("Assembling {} for 0x{:x}", disass.c_str(), address);
   });
-  assembler->getEmitter().encodeInstruction(inst, stream, fixups, *MSTI);
-  uint64_t size = stream.current_pos() - pos;
+  assembler->getEmitter().encodeInstruction(inst, CB, fixups, *MSTI);
+  auto buffRef = llvm::MutableArrayRef<char>(CB).drop_front(pos);
 
   if (fixups.size() > 0) {
     llvm::MCValue target = llvm::MCValue();
     llvm::MCFixup fixup = fixups.pop_back_val();
     int64_t value;
     if (fixup.getValue()->evaluateAsAbsolute(value)) {
-      assembler->getBackend().applyFixup(
-          *assembler, fixup, target,
-          llvm::MutableArrayRef<char>((char *)stream.get_ptr() + pos, size),
-          (uint64_t)value, true, MSTI.get());
+      assembler->getBackend().applyFixup(*assembler, fixup, target, buffRef,
+                                         (uint64_t)value, true, MSTI.get());
     } else {
       QBDI_WARN("Could not evalutate fixup, might crash!");
     }
   }
 
-  QBDI_DEBUG("Assembly result at 0x{:x} is: {:n}",
-             reinterpret_cast<rword>(stream.get_ptr()) + pos,
-             spdlog::to_hex(reinterpret_cast<uint8_t *>(stream.get_ptr()) + pos,
-                            reinterpret_cast<uint8_t *>(stream.get_ptr()) +
-                                stream.current_pos()));
+  QBDI_DEBUG("Assembly result for 0x{:x} is: {:n}", address,
+             spdlog::to_hex(buffRef));
 }
 
 std::string LLVMCPU::showInst(const llvm::MCInst &inst, rword address) const {
@@ -264,13 +256,11 @@ void LLVMCPU::setOptions(Options opts) {
 }
 
 int LLVMCPU::getMCInstSize(const llvm::MCInst &inst) const {
-  uint8_t buff[32];
-  llvm::sys::MemoryBlock os{&buff, sizeof(buff)};
-  memory_ostream stream{os};
+  llvm::SmallVector<char, 16> stream;
 
   writeInstruction(inst, stream);
 
-  return stream.current_pos();
+  return stream.size();
 }
 
 } // namespace QBDI

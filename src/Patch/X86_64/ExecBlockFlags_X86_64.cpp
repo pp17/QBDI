@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,13 +84,11 @@ uint8_t getExecBlockFlags(const llvm::MCInst &inst,
     }
   }
 
-  const uint16_t *implicitRegs = desc.getImplicitDefs();
-  for (; implicitRegs && *implicitRegs; implicitRegs++) {
-    flags |= cache.get(*implicitRegs);
+  for (const unsigned implicitRegs : desc.implicit_uses()) {
+    flags |= cache.get(implicitRegs);
   }
-  implicitRegs = desc.getImplicitUses();
-  for (; implicitRegs && *implicitRegs; implicitRegs++) {
-    flags |= cache.get(*implicitRegs);
+  for (const unsigned implicitRegs : desc.implicit_defs()) {
+    flags |= cache.get(implicitRegs);
   }
 
   // detect implicit FPU instruction

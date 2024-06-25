@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,6 +138,7 @@ GetPCOffset::generate(const Patch &patch, TempManager &temp_manager) const {
           case llvm::AArch64::B:
           case llvm::AArch64::BL:
           case llvm::AArch64::Bcc:
+          case llvm::AArch64::BCcc:
           case llvm::AArch64::CBNZW:
           case llvm::AArch64::CBNZX:
           case llvm::AArch64::CBZW:

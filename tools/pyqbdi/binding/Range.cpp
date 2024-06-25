@@ -1,7 +1,7 @@
 /*
  * This file is part of pyQBDI (python binding for QBDI).
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,16 +84,28 @@ void init_binding_Range(py::module_ &m) {
                  throw std::out_of_range("Only two elements");
              }
            })
-      .def("__setitem__", [](Range<rword> &r, int index, rword value) {
-        switch (index) {
-          case 0:
-            r.setStart(value);
-          case 1:
-            r.setEnd(value);
-          default:
-            throw std::out_of_range("Only two elements");
-        }
-      });
+      .def("__setitem__",
+           [](Range<rword> &r, int index, rword value) {
+             switch (index) {
+               case 0:
+                 r.setStart(value);
+               case 1:
+                 r.setEnd(value);
+               default:
+                 throw std::out_of_range("Only two elements");
+             }
+           })
+      .def("__copy__", [](const Range<rword> &r) -> Range<rword> { return r; })
+      .def(py::pickle(
+          [](const Range<rword> &r) { // __getstate__
+            return py::make_tuple(r.start(), r.end());
+          },
+          [](py::tuple t) -> Range<rword> { // __setstate__
+            if (t.size() != 2)
+              throw std::runtime_error("Invalid state!");
+
+            return {t[0].cast<rword>(), t[1].cast<rword>()};
+          }));
 }
 
 } // namespace pyQBDI

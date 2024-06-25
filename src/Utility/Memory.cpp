@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,12 +75,12 @@ void alignedFree(void *ptr) {
 }
 
 bool allocateVirtualStack(GPRState *ctx, uint32_t stackSize, uint8_t **stack) {
-  (*stack) = (uint8_t *)alignedAlloc(stackSize, 16);
+  (*stack) = static_cast<uint8_t *>(alignedAlloc(stackSize, 16));
   if (*stack == nullptr) {
     return false;
   }
 
-  QBDI_GPR_SET(ctx, REG_SP, (QBDI::rword)(*stack) + stackSize);
+  QBDI_GPR_SET(ctx, REG_SP, reinterpret_cast<QBDI::rword>(*stack) + stackSize);
   QBDI_GPR_SET(ctx, REG_BP, QBDI_GPR_GET(ctx, REG_SP));
 
   return true;

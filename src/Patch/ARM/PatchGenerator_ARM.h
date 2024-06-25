@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -727,6 +727,21 @@ public:
   generate(const Patch &patch, TempManager &temp_manager) const override;
 
   inline bool modifyPC() const override { return true; }
+};
+
+class T2BXAUTPatchGen : public AutoClone<PatchGenerator, T2BXAUTPatchGen> {
+
+public:
+  /*! A patchGenerator for thumb2 BXAUT instruction to perform AUTG operation
+   */
+  T2BXAUTPatchGen() {}
+
+  /*! Output:
+   *
+   * AUTG
+   */
+  std::vector<std::unique_ptr<RelocatableInst>>
+  generate(const Patch &patch, TempManager &temp_manager) const override;
 };
 
 } // namespace QBDI

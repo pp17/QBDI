@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,18 +101,20 @@ void getUsedGPR(const llvm::MCInst &inst, const LLVMCPU &llvmcpu,
     }
   }
 
-  for (const uint16_t *implicitRegs = desc.getImplicitUses();
-       implicitRegs && *implicitRegs; ++implicitRegs) {
-    DEBUG_REGISTER("Reg ImplicitUses {}",
-                   llvmcpu.getRegisterName(*implicitRegs));
-    addRegisterInfo(regUsage, regUsageExtra, *implicitRegs, RegisterUsed);
+  for (const unsigned implicitRegs : desc.implicit_uses()) {
+    if (implicitRegs) {
+      DEBUG_REGISTER("Reg ImplicitUses {}",
+                     llvmcpu.getRegisterName(implicitRegs));
+      addRegisterInfo(regUsage, regUsageExtra, implicitRegs, RegisterUsed);
+    }
   }
 
-  for (const uint16_t *implicitRegs = desc.getImplicitDefs();
-       implicitRegs && *implicitRegs; ++implicitRegs) {
-    DEBUG_REGISTER("Reg ImplicitDefs {}",
-                   llvmcpu.getRegisterName(*implicitRegs));
-    addRegisterInfo(regUsage, regUsageExtra, *implicitRegs, RegisterSet);
+  for (const unsigned implicitRegs : desc.implicit_defs()) {
+    if (implicitRegs) {
+      DEBUG_REGISTER("Reg ImplicitDefs {}",
+                     llvmcpu.getRegisterName(implicitRegs));
+      addRegisterInfo(regUsage, regUsageExtra, implicitRegs, RegisterSet);
+    }
   }
 
   fixLLVMUsedGPR(inst, llvmcpu, regUsage, regUsageExtra);

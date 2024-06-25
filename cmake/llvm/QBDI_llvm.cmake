@@ -6,14 +6,30 @@ set(__add_qbdi_llvm ON)
 include(FetchContent)
 
 # configure FetchContent
-set(QBDI_LLVM_MAJOR_VERSION 13)
-set(QBDI_LLVM_VERSION 13.0.0)
+set(QBDI_LLVM_MAJOR_VERSION 17)
+set(QBDI_LLVM_VERSION 17.0.6)
+
+# download and include llvm cmake module
+option(QBDI_INCLUDE_LLVM_CMAKE_MODUKE "Include llvm cmake module" ON)
+if(QBDI_INCLUDE_LLVM_CMAKE_MODUKE)
+  FetchContent_Declare(
+    llvm_cmake
+    URL "https://github.com/llvm/llvm-project/releases/download/llvmorg-${QBDI_LLVM_VERSION}/cmake-${QBDI_LLVM_VERSION}.src.tar.xz"
+    URL_HASH
+      "SHA256=807f069c54dc20cb47b21c1f6acafdd9c649f3ae015609040d6182cab01140f4"
+      SOURCE_DIR "${FETCHCONTENT_BASE_DIR}/cmake"
+    DOWNLOAD_DIR "${QBDI_THIRD_PARTY_DIRECTORY}/llvm-cmake-download")
+
+  if(NOT llvm_cmake_POPULATED)
+    FetchContent_Populate(llvm_cmake)
+  endif()
+endif()
 
 FetchContent_Declare(
   llvm
   URL "https://github.com/llvm/llvm-project/releases/download/llvmorg-${QBDI_LLVM_VERSION}/llvm-${QBDI_LLVM_VERSION}.src.tar.xz"
   URL_HASH
-    "SHA256=408d11708643ea826f519ff79761fcdfc12d641a2510229eec459e72f8163020"
+    "SHA256=b638167da139126ca11917b6880207cc6e8f9d1cbb1a48d87d017f697ef78188"
   DOWNLOAD_DIR "${QBDI_THIRD_PARTY_DIRECTORY}/llvm-download")
 
 FetchContent_GetProperties(llvm)
@@ -71,6 +87,9 @@ if(NOT llvm_POPULATED)
   set(LLVM_ENABLE_ZLIB
       OFF
       CACHE BOOL "Disable LLVM_ENABLE_ZLIB")
+  set(LLVM_ENABLE_ZSTD
+      OFF
+      CACHE BOOL "Disable LLVM_ENABLE_ZSTD")
   set(LLVM_TARGET_ARCH
       ${QBDI_LLVM_ARCH}
       CACHE STRING "set LLVM_ARCH")
@@ -132,12 +151,6 @@ if(NOT llvm_POPULATED)
   set(CMAKE_CXX_VISIBILITY_PRESET
       "hidden"
       CACHE STRING "set CMAKE_CXX_VISIBILITY_PRESET" FORCE)
-
-  # remove visibility("default") in llvm code
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/llvm/include_llvm_Support_Compiler.h.patch.txt"
-    "${llvm_SOURCE_DIR}/include/llvm/Support/Compiler.h"
-    COPYONLY)
 
   if(NOT ("${NATIVE_TABLEN_PATH}" STREQUAL ""))
     set(LLVM_TABLEGEN

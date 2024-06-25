@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@
 
 .text
 
-.private_extern __qbdi_runCodeBlock
+.hidden __qbdi_runCodeBlock
+.globl  __qbdi_runCodeBlock
 
 __qbdi_runCodeBlock:
     mov eax, [esp+4]
@@ -42,3 +43,6 @@ _skip_save_fpu:
 _skip_restore_fpu:
     cld;
     ret;
+
+# mark stack as no-exec
+.section	.note.GNU-stack,"",@progbits

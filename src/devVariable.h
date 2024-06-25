@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 
 #define DEBUG_INST_OPERAND 0
 #define CHECK_INSTRUCTION_SIZE 1
-#define CHECK_MEMORYACCESS_TABLE 0
-#define CHECK_INSTINFO_TABLE 0
+#define CHECK_MEMORYACCESS_TABLE 1
+#define CHECK_INSTINFO_TABLE 1
 
 #endif // DEVVARIABLE_H

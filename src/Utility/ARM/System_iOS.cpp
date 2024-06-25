@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@
 #include <mach/vm_map.h>
 #include <mutex>
 
-#include "llvm/Support/Host.h"
 #include "llvm/Support/Process.h"
+#include "llvm/TargetParser/Host.h"
 
 #include "Utility/AARCH64/server-iOS-jit-user.h"
 #include "Utility/LogSys.h"

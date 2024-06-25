@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,6 +151,17 @@ TEST_CASE_METHOD(APITest, "VMTest-ExternalCall") {
   vm.run((QBDI::rword)dummyFunCall, (QBDI::rword)FAKE_RET_ADDR);
   QBDI::rword ret = QBDI_GPR_GET(state, QBDI::REG_RETURN);
   REQUIRE(ret == (QBDI::rword)dummyFun1(42));
+
+  SUCCEED();
+}
+
+TEST_CASE_METHOD(APITest, "VMTest-SwitchStackAndCall8") {
+  QBDI_GPR_SET(state, QBDI::REG_SP, 0);
+
+  QBDI::rword ret;
+  vm.switchStackAndCall(&ret, (QBDI::rword)dummyFun8,
+                        {1, 2, 3, 5, 8, 13, 21, 34});
+  REQUIRE(ret == (QBDI::rword)dummyFun8(1, 2, 3, 5, 8, 13, 21, 34));
 
   SUCCEED();
 }

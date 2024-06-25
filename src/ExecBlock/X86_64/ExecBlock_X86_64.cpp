@@ -2,7 +2,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ bool ExecBlock::writePatch(std::vector<Patch>::const_iterator seqCurrent,
   }
 
   if (not applyRelocatedInst(p.insts, &tagRegistry, llvmcpu,
-                             MINIMAL_BLOCK_SIZE + epilogueSize)) {
+                             MINIMAL_BLOCK_SIZE)) {
     QBDI_DEBUG("Not enough space left: rollback");
     return false;
   }

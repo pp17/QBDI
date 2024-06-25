@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -629,8 +629,8 @@ void fixLLVMUsedGPR(const llvm::MCInst &inst, const LLVMCPU &llvmcpu,
                        "Unexpected operands number");
 
     for (unsigned int opn = 0; opn < desc.getNumOperands(); opn++) {
-      const llvm::MCOperandInfo *opInfo = desc.opInfo_begin() + opn;
-      if (opInfo->RegClass == llvm::ARM::CCRRegClassID) {
+      const llvm::MCOperandInfo &opInfo = desc.operands()[opn];
+      if (opInfo.RegClass == llvm::ARM::CCRRegClassID) {
         // found the position of CSPR set operand
         const llvm::MCOperand &op = inst.getOperand(opn);
         QBDI_REQUIRE_ABORT(op.isReg(), "Unexpected operand type");

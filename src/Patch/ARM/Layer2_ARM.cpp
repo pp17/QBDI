@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1618,6 +1618,23 @@ llvm::MCInst bkpt(unsigned int value) {
 
   inst.setOpcode(llvm::ARM::BKPT);
   inst.addOperand(llvm::MCOperand::createImm(value));
+
+  return inst;
+}
+
+llvm::MCInst t2autg(RegLLVM reg, RegLLVM ctx, RegLLVM tag) {
+  return t2autg(reg, ctx, tag, llvm::ARMCC::AL);
+}
+
+llvm::MCInst t2autg(RegLLVM reg, RegLLVM ctx, RegLLVM tag, unsigned cond) {
+  llvm::MCInst inst;
+
+  inst.setOpcode(llvm::ARM::t2AUTG);
+  inst.addOperand(llvm::MCOperand::createImm(cond));
+  inst.addOperand(llvm::MCOperand::createReg(getCondReg(cond)));
+  inst.addOperand(llvm::MCOperand::createReg(reg.getValue()));
+  inst.addOperand(llvm::MCOperand::createReg(ctx.getValue()));
+  inst.addOperand(llvm::MCOperand::createReg(tag.getValue()));
 
   return inst;
 }

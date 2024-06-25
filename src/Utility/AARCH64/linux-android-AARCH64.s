@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,41 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.intel_syntax noprefix
-
 .text
 
-.hidden __qbdi_runCodeBlock
-.globl  __qbdi_runCodeBlock
+.hidden __qbdi_asmStackSwitch
+.globl  __qbdi_asmStackSwitch
 
-__qbdi_runCodeBlock:
-    test rsi, 2;
-    jz _skip_save_fpu;
-    sub rsp, 8;
-    stmxcsr [rsp];
-    fnstcw [rsp+4];
-_skip_save_fpu:
-    push r15;
-    push r14;
-    push r13;
-    push r12;
-    push rbp;
-    push rsi;
-    push rbx;
-    call rdi;
-    pop rbx;
-    pop rsi;
-    pop rbp;
-    pop r12;
-    pop r13;
-    pop r14;
-    pop r15;
-    test rsi, 2;
-    jz _skip_restore_fpu;
-    fninit;
-    fldcw [rsp+4];
-    ldmxcsr [rsp];
-    add rsp, 8;
-_skip_restore_fpu:
-    cld;
-    ret;
+.align 8
+__qbdi_asmStackSwitch:
+  bti c;
+  stp x29, x30, [sp, #-16]!;
+  mov x29, sp;
+
+  bic	x1, x1, #15;
+  mov sp, x1;
+  mov x1, x29;
+  blr x2;
+  mov sp, x29;
+  ldp x29, x30, [sp], 16;
+  ret;
+
+# mark stack as no-exec
+.section	.note.GNU-stack,"",@progbits

@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.intel_syntax noprefix
-
 .text
 
-.hidden __qbdi_runCodeBlock
-.globl  __qbdi_runCodeBlock
+;#if defined(__ARM_PCS_VFP)
+;.fpu vfp
+.fpu neon
 
-__qbdi_runCodeBlock:
-    mov eax, [esp+4]
-    mov ecx, [esp+8]
-    test ecx, 2;
-    jz _skip_save_fpu;
-    sub esp, 8;
-    stmxcsr [esp];
-    fnstcw [esp+4];
-_skip_save_fpu:
-    pushad;
-    call eax;
-    popad;
-    test ecx, 2;
-    jz _skip_restore_fpu;
-    fninit;
-    fldcw [esp+4];
-    ldmxcsr [esp];
-    add esp, 8;
-_skip_restore_fpu:
-    cld;
-    ret;
+;#endif
+
+.code 32
+.section .text
+.align 4
+.hidden __qbdi_asmStackSwitch
+.globl  __qbdi_asmStackSwitch
+.type __qbdi_asmStackSwitch, %function
+
+__qbdi_asmStackSwitch:
+    push {fp, lr};
+    mov fp, sp;
+
+    bic	r1, r1, #15;
+    add r1, r1, #12;
+    mov sp, r1;
+
+    push {r3};
+    mov r1, fp;
+    blx r2;
+
+    mov sp, fp;
+    pop {fp, pc};
+
+# mark stack as no-exec
+.section	.note.GNU-stack

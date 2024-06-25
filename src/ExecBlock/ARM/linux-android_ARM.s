@@ -1,7 +1,7 @@
 /*
  * This file is part of QBDI.
  *
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2024 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,10 @@
 .code 32
 .section .text
 .align 4
-.globl __qbdi_runCodeBlock
-
+.hidden __qbdi_runCodeBlock
+.globl  __qbdi_runCodeBlock
 .type __qbdi_runCodeBlock, %function
+
 __qbdi_runCodeBlock:
     // save GPRs
     push {r0-r12,lr};
@@ -58,3 +59,6 @@ __qbdi_runCodeBlock:
 ;#endif
     // restore GPR and ret
     pop {r0-r12,pc};
+
+# mark stack as no-exec
+.section	.note.GNU-stack

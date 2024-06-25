@@ -1,9 +1,11 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -e
 set -x
 
 BASEDIR=$(cd $(dirname "$0") && pwd -P)
 GITDIR=$(git rev-parse --show-toplevel)
+
+TARGET_ARCH="$1"
 
 . "${GITDIR}/docker/common.sh"
 
@@ -16,17 +18,21 @@ build_ubuntu_debian() {
     CMAKE_ARGUMENT="$4"
     IMG_TAG="qbdi:package_${OS}_${TAG}_${TARGET}"
 
+    if [[ -n "$TARGET_ARCH" ]] && [[ "$TARGET" != "$TARGET_ARCH" ]]; then
+        return
+    fi
+
     if [[ "$TARGET" = "X86" ]]; then
         DOCKER_IMG="i386/${OS}:${TAG}"
+    elif [[ "$TARGET" = "ARM" ]]; then
+        DOCKER_IMG="arm32v7/${OS}:${TAG}"
+    elif [[ "$TARGET" = "AARCH64" ]]; then
+        DOCKER_IMG="arm64v8/${OS}:${TAG}"
     else
         DOCKER_IMG="${OS}:${TAG}"
     fi
 
-    if [[ "${OS}" = "ubuntu" && "${TAG}" = "18.04" ]]; then
-      DOCKERFILE="${GITDIR}/docker/ubuntu_debian/Dockerfile.ubuntu18_04"
-    else
-      DOCKERFILE="${GITDIR}/docker/ubuntu_debian/Dockerfile"
-    fi
+    DOCKERFILE="${GITDIR}/docker/ubuntu_debian/Dockerfile"
 
     docker build "${BASEDIR}" -t ${IMG_TAG} -f "${DOCKERFILE}" \
                               --build-arg DOCKER_IMG="${DOCKER_IMG}" \
@@ -46,6 +52,10 @@ build_archlinux () {
     TARGET="$1"
     IMG_TAG="qbdi:package_archlinux_${TARGET}"
 
+    if [[ -n "$TARGET_ARCH" ]] && [[ "$TARGET" != "$TARGET_ARCH" ]]; then
+        return
+    fi
+
     docker build "${BASEDIR}" -t ${IMG_TAG} \
                               -f "${GITDIR}/docker/archlinux/Dockerfile.${TARGET}" \
                               --build-arg QBDI_ARCH="$TARGET" \
@@ -58,20 +68,35 @@ build_archlinux () {
 
 prepare_archive
 
-# debian11 x86
-build_ubuntu_debian debian 11 X86
+# debian12 ARM
+build_ubuntu_debian debian "${DEBIAN_TARGET}" ARM
 
-# debian11 x64
-build_ubuntu_debian debian 11 X86_64
+# debian12 AARCH64
+build_ubuntu_debian debian "${DEBIAN_TARGET}" AARCH64
 
-# ubuntu 18.04 x86
-build_ubuntu_debian ubuntu 18.04 X86
+# debian12 x86
+build_ubuntu_debian debian "${DEBIAN_TARGET}" X86
+
+# debian12 x64
+build_ubuntu_debian debian "${DEBIAN_TARGET}" X86_64
 
 # ubuntu lts x64
-build_ubuntu_debian ubuntu 22.04 X86_64
+build_ubuntu_debian ubuntu "${UBUNTU_LTS_TARGET}" X86_64
 
-# ubuntu 21.10 x64
-build_ubuntu_debian ubuntu 21.10 X86_64
+# ubuntu lts ARM
+build_ubuntu_debian ubuntu "${UBUNTU_LTS_TARGET}" ARM
+
+# ubuntu lts AARCH64
+build_ubuntu_debian ubuntu "${UBUNTU_LTS_TARGET}" AARCH64
+
+# ubuntu 23.10 x64
+build_ubuntu_debian ubuntu "${UBUNTU_LAST_TARGET}" X86_64
+
+# ubuntu 23.10 ARM
+build_ubuntu_debian ubuntu "${UBUNTU_LAST_TARGET}" ARM
+
+# ubuntu 23.10 AARCH64
+build_ubuntu_debian ubuntu "${UBUNTU_LAST_TARGET}" AARCH64
 
 # archlinux x64
 build_archlinux X86_64
