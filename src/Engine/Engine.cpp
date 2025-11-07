@@ -614,7 +614,7 @@ VMAction Engine::signalEvent(VMEvent event, rword currentPC,
     return CONTINUE;
   }
 
-  VMState vmState{event, currentPC, currentPC, currentPC, currentPC, 0,(rword)execBroker};
+  VMState vmState{event, currentPC, currentPC, currentPC, currentPC, 0};
   if (seqLoc != nullptr) {
     vmState.basicBlockStart = basicBlockBegin;
     vmState.basicBlockEnd = seqLoc->bbEnd;
