@@ -850,6 +850,8 @@ public:
    *               after call.
    */
   QBDI_EXPORT void reduceCacheTo(uint32_t nb);
+
+  QBDI_EXPORT bool transferExecution(rword addr, GPRState* gprState, FPRState* fprState);
 };
 
 } // namespace QBDI
