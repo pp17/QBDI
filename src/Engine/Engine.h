@@ -335,6 +335,7 @@ public:
    *               after call.
    */
   void reduceCacheTo(uint32_t nb);
+  bool transferExecution(void* execBrokerPtr, rword addr, GPRState* gprState, FPRState* fprState);
 };
 
 } // namespace QBDI
