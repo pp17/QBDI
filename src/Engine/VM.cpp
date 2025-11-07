@@ -1020,4 +1020,6 @@ uint32_t VM::getNbExecBlock() const { return engine->getNbExecBlock(); }
 
 void VM::reduceCacheTo(uint32_t nb) { engine->reduceCacheTo(nb); }
 
+bool VM::transferExecution(rword addr, GPRState* gprState, FPRState* fprState)(return engine->transferExecution(addr,gprState,fprState);)
+
 } // namespace QBDI
