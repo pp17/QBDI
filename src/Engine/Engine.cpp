@@ -739,4 +739,7 @@ void Engine::reduceCacheTo(uint32_t nb) {
   }
 }
 
+bool transferExecution(rword addr, GPRState* gprState, FPRState* fprState) {
+    return execBroker->transferExecution(addr, gprState, fprState);
+}
 } // namespace QBDI
